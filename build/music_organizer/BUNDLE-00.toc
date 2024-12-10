@@ -1,0 +1,3 @@
+([('music_organizer',
+   '/Users/palmer/Work/Dev/Scripts/music_organizer/dist/music_organizer',
+   'EXECUTABLE')],)
