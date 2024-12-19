@@ -3,67 +3,90 @@ import shutil
 import webbrowser
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
-import discogs_client
-from mutagen import File as MutagenFile
 import threading
 import time
-import queue  # To communicate between threads
+import queue
+import discogs_client
+from mutagen import File as MutagenFile
 
 
+# Open SoundCloud function
 def open_soundcloud():
     webbrowser.open("https://soundcloud.com/ivpalmer")
+
+
+# Open folder based on OS
+def open_folder(folder_path):
+    try:
+        if os.name == "nt":  # Windows
+            os.startfile(folder_path)
+        elif os.name == "posix":  # macOS or Linux
+            os.system(f"open '{folder_path}'")
+        else:
+            messagebox.showinfo("Notification", "Your OS is not supported for opening folders.")
+    except Exception as e:
+        print(f"Error opening folder: {e}")
+
+
+# Debugging function to print logs
+def log_debug(message):
+    print(f"[DEBUG]: {message}")
 
 
 def main():
     # Initialize Tkinter
     root = tk.Tk()
     root.title("Music Organizer")
-    root.geometry("600x550")  # Increased height to fit all elements
+    root.geometry("700x700")  # Adjusted height for buttons and layout
     root.resizable(False, False)
 
     selected_folder = tk.StringVar(value="No folder selected")
     log_queue = queue.Queue()
 
-    # Discogs Token Input with Guidance
-    tk.Label(root, text="Discogs API Token:", font=("Helvetica", 10)).pack(pady=(10, 5))
-    tk.Label(root, text="(Find your token at: https://www.discogs.com/settings/developers)", 
-             font=("Helvetica", 8)).pack(pady=(0, 10))
-    token_entry = tk.Entry(root, width=60)
-    token_entry.pack(pady=(0, 10))
+    def scale_font(size):
+        return size  # No scaling for simplicity in debugging
 
-    # Move/Copy Selection
-    tk.Label(root, text="Select Action:", font=("Helvetica", 10)).pack(pady=(10, 5))
+    # UI Layout
+    container = tk.Frame(root)
+    container.pack(expand=True, fill="both")
+
+    tk.Label(container, text="Discogs API Token:", font=("Helvetica", scale_font(16))).pack(pady=(20, 10))
+    token_entry = tk.Entry(container, width=40, font=("Helvetica", scale_font(14)))
+    token_entry.pack(pady=(0, 15))
+
+    def open_discogs_link():
+        webbrowser.open("https://www.discogs.com/settings/developers")
+
+    tk.Button(container, text="Find Your Token Here", command=open_discogs_link,
+              font=("Helvetica", scale_font(14))).pack(pady=(0, 25))
+
+    tk.Label(container, text="Select Action:", font=("Helvetica", scale_font(16))).pack(pady=(5, 5))
     action_var = tk.StringVar(value="move")
-    options_frame = tk.Frame(root)
-    options_frame.pack(pady=(0, 5))
-    move_radio = tk.Radiobutton(options_frame, text="Move Files", variable=action_var, value="move", 
-                                font=("Helvetica", 10))
-    copy_radio = tk.Radiobutton(options_frame, text="Copy Files", variable=action_var, value="copy", 
-                                font=("Helvetica", 10))
+    options_frame = tk.Frame(container)
+    options_frame.pack(pady=(0, 15))
+    move_radio = tk.Radiobutton(options_frame, text="Move Files", variable=action_var, value="move", font=("Helvetica", scale_font(14)))
+    copy_radio = tk.Radiobutton(options_frame, text="Copy Files", variable=action_var, value="copy", font=("Helvetica", scale_font(14)))
     move_radio.grid(row=0, column=0, padx=10)
     copy_radio.grid(row=0, column=1, padx=10)
 
-    # Warning Label
-    tk.Label(root, text="WARNING: DJ Softwares might lose reference if you move files", 
-             font=("Helvetica", 8), fg="red").pack(pady=(5, 10))
+    tk.Label(container, text="WARNING: DJ Softwares might lose reference if you move files", 
+             font=("Helvetica", scale_font(12)), fg="red").pack(pady=(0, 15))
 
-    # Folder Selection
-    folder_frame = tk.Frame(root)
-    folder_frame.pack(pady=(10, 5))
-    tk.Button(folder_frame, text="Select Music Folder", command=lambda: select_folder(selected_folder), 
-              font=("Helvetica", 10)).grid(row=0, column=0, padx=10)
-    tk.Label(folder_frame, textvariable=selected_folder, font=("Helvetica", 8), wraplength=400, anchor="w", justify="left").grid(row=0, column=1, sticky="w")
+    folder_frame = tk.Frame(container)
+    folder_frame.pack(pady=(5, 15))
+    tk.Button(folder_frame, text="Select Music Folder", command=lambda: select_folder(selected_folder),
+              font=("Helvetica", scale_font(14))).grid(row=0, column=0, padx=15)
+    tk.Label(folder_frame, textvariable=selected_folder, font=("Helvetica", scale_font(12)), wraplength=600, anchor="w", justify="left").grid(row=0, column=1, sticky="w")
 
-    # Progress Bar
-    progress = ttk.Progressbar(root, orient="horizontal", length=500, mode="determinate")
-    progress.pack(pady=(10, 5))
+    progress = ttk.Progressbar(container, orient="horizontal", length=600, mode="determinate")
+    progress.pack(pady=(10, 15))
 
-    # Log Window
-    log_window = tk.Text(root, height=10, width=80, state="disabled", bg="black", fg="white")
-    log_window.pack(pady=(10, 5))
+    log_window = tk.Text(container, height=15, width=80, state="disabled", bg="black", fg="white", font=("Helvetica", scale_font(12)))
+    log_window.pack(pady=(5, 15))
 
     def log_message(message):
         log_queue.put(message)
+        log_debug(message)
 
     def update_log():
         while not log_queue.empty():
@@ -74,20 +97,11 @@ def main():
             log_window.see("end")
         root.after(100, update_log)
 
-    # Start Button
-    tk.Button(root, text="Start Organizing", command=lambda: start_organizing_threaded(
-              token_entry.get(), selected_folder.get(), action_var.get()), font=("Helvetica", 10)).pack(pady=(10, 5))
-
-    # Follow SoundCloud Button
-    tk.Button(root, text="Follow Me on SoundCloud", command=open_soundcloud, font=("Helvetica", 10)).pack(pady=(5, 10))
-
-    # Folder Selection Function
     def select_folder(selected_folder_var):
         folder = filedialog.askdirectory(title="Select your music folder")
         if folder:
             selected_folder_var.set(folder)
 
-    # Start Organizing Function
     def start_organizing_with_feedback(user_token, folder, action):
         if not user_token:
             log_message("Error: Please enter your Discogs API token.")
@@ -140,10 +154,17 @@ def main():
                 progress["value"] = i + 1
                 root.update_idletasks()
 
+            except FileNotFoundError as e:
+                log_message(f"Error processing {file}: {e}")
             except Exception as e:
                 log_message(f"Error processing {file}: {e}")
+                log_debug(f"Exception: {e}")
+
+            # Add a delay to avoid hitting Discogs API rate limits
+            time.sleep(2)
 
         log_message("Organization complete!")
+        open_folder(folder)
 
     def fetch_release_info(d, file_path, file_name):
         try:
@@ -179,6 +200,11 @@ def main():
         threading.Thread(
             target=start_organizing_with_feedback, args=(user_token, folder, action)
         ).start()
+
+    tk.Button(container, text="Start Organizing", command=lambda: start_organizing_threaded(
+              token_entry.get(), selected_folder.get(), action_var.get()), font=("Helvetica", scale_font(14))).pack(pady=(5, 15))
+
+    tk.Button(container, text="Follow Me on SoundCloud", command=open_soundcloud, font=("Helvetica", scale_font(14))).pack(pady=(0, 15))
 
     update_log()
     root.mainloop()
