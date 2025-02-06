@@ -1,4 +1,0 @@
-([('music_organizer',
-   '/Users/palmer/Work/Dev/Scripts/Music '
-   'Organizer/MusicOrganizer/dist/music_organizer',
-   'EXECUTABLE')],)
