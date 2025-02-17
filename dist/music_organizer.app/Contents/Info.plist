@@ -24,7 +24,7 @@
 	<key>CFBundleIconFile</key>
 	<string>logo.icns</string>
 	<key>CFBundleIdentifier</key>
-	<string>org.pythonmac.unspecified.music_organizer</string>
+	<string>com.raphaelpalmer.musicorganizer</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
@@ -56,8 +56,12 @@
 	</dict>
 	<key>LSHasLocalizedDisplayName</key>
 	<false/>
+	<key>LSMinimumSystemVersion</key>
+	<string>11.0</string>
 	<key>NSAppleScriptEnabled</key>
 	<false/>
+	<key>NSHighResolutionCapable</key>
+	<true/>
 	<key>NSHumanReadableCopyright</key>
 	<string>Copyright not specified</string>
 	<key>NSMainNibFile</key>
@@ -93,25 +97,16 @@
 	<array/>
 	<key>PyRuntimeLocations</key>
 	<array>
-		<string>@executable_path/../Frameworks/Python.framework/Versions/3.11/Python</string>
+		<string>@executable_path/../Frameworks/Python.framework/Versions/3.13/Python</string>
 	</array>
 	<key>PythonInfoDict</key>
 	<dict>
 		<key>PythonExecutable</key>
-		<string>/Users/palmer/Work/Dev/Scripts/Music Organizer/MusicOrganizer/venv/bin/python</string>
+		<string>@executable_path/../Frameworks/Python.framework/Versions/3.13/Python</string>
 		<key>PythonLongVersion</key>
-		<string>3.11.9 (v3.11.9:de54cf5be3, Apr  2 2024, 07:12:50) [Clang 13.0.0 (clang-1300.0.29.30)]</string>
+		<string>3.13.1 (v3.13.1:06714517797, Dec  3 2024, 14:00:22) [Clang 15.0.0 (clang-1500.3.9.4)]</string>
 		<key>PythonShortVersion</key>
-		<string>3.1</string>
-		<key>py2app</key>
-		<dict>
-			<key>alias</key>
-			<false/>
-			<key>template</key>
-			<string>app</string>
-			<key>version</key>
-			<string>0.28.8</string>
-		</dict>
+		<string>3.13</string>
 	</dict>
 </dict>
 </plist>
