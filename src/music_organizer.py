@@ -10,17 +10,22 @@ from tkinter import filedialog, messagebox, ttk
 import threading
 import queue
 
+# Ensure that a character detection module is available.
+# Adding "chardet" to our imports forces its inclusion.
+try:
+    import chardet
+except ImportError:
+    print("Warning: chardet module not found; requests may issue a warning.", file=sys.stderr)
+
 from discogs_utils import create_discogs_client
 import organizer
 
 # --- Resource Path Setup ---
 if getattr(sys, 'frozen', False):
-    # In a py2app bundle, sys.executable is in Contents/MacOS.
-    # Go up two levels to reach Contents, then join "Resources"
-    app_contents = os.path.dirname(os.path.dirname(sys.executable))
-    resource_path = os.path.join(app_contents, "Resources")
+    # When frozen, __file__ is located in the Resources folder.
+    resource_path = os.path.dirname(__file__)
 else:
-    # When running in development (non-frozen)
+    # When running in development (non-frozen), use the expected folder.
     resource_path = os.path.join(os.getcwd(), "dist", "music_organizer.app", "Contents", "Resources")
 
 print("Computed resource_path:", resource_path)
@@ -71,18 +76,15 @@ def main():
 
     # Workaround: force Tcl/Tk to use a valid menu title.
     try:
-        # Set the global Tcl variable "tk::mac::MenuBarTitle" to a non-nil value.
         root.tk.eval('global tk::mac::MenuBarTitle; set tk::mac::MenuBarTitle "Music Organizer"')
     except Exception as e:
         print("Error setting tk::mac::MenuBarTitle:", e)
 
-    # Attempt to override the default Apple menu initialization.
     try:
         root.tk.eval('proc tk::mac::initAppleMenu {} {}')
     except Exception as e:
         print("Error overriding tk::mac::initAppleMenu:", e)
 
-    # Also, disable any native Apple menubar integration via Tcl variables.
     try:
         root.tk.call("set", "tk::mac::useAppleMenu", "0")
     except Exception as e:
@@ -92,10 +94,8 @@ def main():
     except Exception as e:
         print("Error setting tk::mac::useMenuBar:", e)
 
-    # Assign a simple menubar to the window.
     try:
         simple_menu = tk.Menu(root)
-        # Optionally, add at least one dummy command to ensure no nil values are passed.
         simple_menu.add_command(label="Music Organizer")
         root.config(menu=simple_menu)
     except Exception as e:
@@ -107,11 +107,9 @@ def main():
     def scale_font(size):
         return size
 
-    # Main container for UI elements.
     container = tk.Frame(root)
     container.pack(expand=True, fill="both")
 
-    # Discogs API token input.
     tk.Label(container, text="Discogs API Token:", font=("Helvetica", scale_font(16))).pack(pady=(20, 10))
     token_entry = tk.Entry(container, width=40, font=("Helvetica", scale_font(14)))
     token_entry.pack(pady=(0, 15))
@@ -120,7 +118,6 @@ def main():
         webbrowser.open("https://www.discogs.com/settings/developers")
     tk.Button(container, text="Find Your Token Here", command=open_discogs_link, font=("Helvetica", scale_font(14))).pack(pady=(0, 25))
 
-    # Radio buttons for selecting action.
     tk.Label(container, text="Select Action:", font=("Helvetica", scale_font(16))).pack(pady=(5, 5))
     action_var = tk.StringVar(value="move")
     options_frame = tk.Frame(container)
@@ -131,18 +128,15 @@ def main():
     tk.Label(container, text="WARNING: DJ Softwares might lose reference if you move files",
              font=("Helvetica", scale_font(12)), fg="red").pack(pady=(0, 15))
 
-    # Folder selection UI.
     folder_frame = tk.Frame(container)
     folder_frame.pack(pady=(5, 15))
     tk.Button(folder_frame, text="Select Music Folder", command=lambda: select_folder(selected_folder),
               font=("Helvetica", scale_font(14))).grid(row=0, column=0, padx=15)
     tk.Label(folder_frame, textvariable=selected_folder, font=("Helvetica", scale_font(12)), wraplength=600, anchor="w", justify="left").grid(row=0, column=1, sticky="w")
 
-    # Progress bar.
     progress = ttk.Progressbar(container, orient="horizontal", length=600, mode="determinate")
     progress.pack(pady=(10, 15))
 
-    # Log display window.
     log_window = tk.Text(container, height=15, width=80, state="disabled", bg="black", fg="white", font=("Helvetica", scale_font(12)))
     log_window.pack(pady=(5, 15))
 
