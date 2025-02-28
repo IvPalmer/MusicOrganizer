@@ -9,8 +9,11 @@ import shutil
 py2app.util.codesign_adhoc = lambda bundle: None
 
 APP = ['src/music_organizer.py']
-# Now include music_organizer.py along with the other modules.
-DATA_FILES = [('', ['__boot__.py', 'discogs_utils.py', 'src/organizer.py', 'src/music_organizer.py'])]
+DATA_FILES = [
+    # We copy __boot__.py and all source files from src into Resources.
+    ('', ['__boot__.py', 'src/discogs_utils.py', 'src/organizer.py', 'src/music_organizer.py'])
+]
+
 OPTIONS = {
     'argv_emulation': True,
     'packages': ['discogs_client', 'mutagen', 'charset_normalizer', 'chardet'],
@@ -40,7 +43,6 @@ OPTIONS = {
     }
 }
 
-# Custom command to patch the Info.plist.
 class PatchPlist(Command):
     description = "Patch the Info.plist in the built app bundle to force the correct PythonInfoDict."
     user_options = []
@@ -70,7 +72,6 @@ class PatchPlist(Command):
         except Exception as e:
             print("Error writing Info.plist:", e)
 
-# Custom command to remove the problematic _multibytecodec.so file.
 class RemoveMbcodec(Command):
     description = "Remove _multibytecodec.so from the bundle (workaround for sandbox denial)."
     user_options = []
