@@ -1,63 +1,43 @@
 #!/usr/bin/env python3
-# __boot__.py – Updated boot script for MusicOrganizer with early patch for charset_normalizer
+"""
+Simplified __boot__.py for MusicOrganizer
 
-import sys
+This boot script:
+  - Sets the environment variable to force chardet.
+  - Marks the app as frozen.
+  - Adds the Resources folder (and its 'src' subfolder if present) to sys.path.
+  - Imports the main module (music_organizer) and calls its main() function.
+"""
+
 import os
+import sys
 import traceback
 import time
-import types
 
-# --- Debug Logging: Startup ---
+# Force use of chardet instead of charset_normalizer
+os.environ['CHARDET_DISABLE_CHARSET_NORMALIZER'] = '1'
+sys.frozen = True
+
 print("DEBUG: __boot__.py has started", file=sys.stderr, flush=True)
-# Pause for 10 seconds to allow attaching a debugger or viewing output.
-time.sleep(10)
+time.sleep(1)  # Short pause for debugging if needed
 
-# --- Force Early Import and Patch for charset_normalizer ---
-try:
-    import charset_normalizer
-    import charset_normalizer.md
-    print("DEBUG: Successfully pre-imported charset_normalizer.md", file=sys.stderr, flush=True)
-    # If the attribute 'md__mypyc' is missing (causing circular import issues), set it to a dummy value.
-    if not hasattr(charset_normalizer, "md__mypyc"):
-        setattr(charset_normalizer, "md__mypyc", None)
-        print("DEBUG: Set dummy attribute md__mypyc on charset_normalizer", file=sys.stderr, flush=True)
-    else:
-        print("DEBUG: charset_normalizer already has attribute md__mypyc", file=sys.stderr, flush=True)
-except Exception as e:
-    print("DEBUG: Error pre-importing charset_normalizer.md:", e, file=sys.stderr, flush=True)
+# Add the Resources directory (where __boot__.py resides) to sys.path
+current_dir = os.path.dirname(__file__)
+if current_dir not in sys.path:
+    sys.path.insert(0, current_dir)
+    print("DEBUG: Added Resources directory to sys.path:", current_dir, file=sys.stderr)
 
-# --- Install Dummy Module for _multibytecodec ---
-if "_multibytecodec" not in sys.modules:
-    dummy_module = types.ModuleType("_multibytecodec")
-    sys.modules["_multibytecodec"] = dummy_module
-    print("DEBUG: Installed dummy _multibytecodec module", file=sys.stderr, flush=True)
-else:
-    print("DEBUG: _multibytecodec already in sys.modules", file=sys.stderr, flush=True)
+# If a 'src' subfolder exists, add it to sys.path so that modules inside it can be imported.
+src_dir = os.path.join(current_dir, "src")
+if os.path.isdir(src_dir):
+    sys.path.insert(0, src_dir)
+    print("DEBUG: Added src directory to sys.path:", src_dir, file=sys.stderr)
 
-# --- Override _ctypes_setup ---
-def _ctypes_setup():
-    # On macOS, Carbon is not available; override to prevent errors.
-    return None
-
-__boot__ = sys.modules.get("__boot__")
-if __boot__ is None:
-    __boot__ = {}
-    sys.modules["__boot__"] = __boot__
-__boot__["_ctypes_setup"] = _ctypes_setup
-
-# --- Optional: argv emulation ---
-def _argv_emulation():
-    # Implement argv emulation if needed.
-    pass
-
-try:
-    _argv_emulation()
-except Exception as e:
-    print("Error in argv emulation:", e, file=sys.stderr)
-
-# --- Import and Launch the Main Application Module ---
+# Now import the main module and call its main() function explicitly.
 try:
     import music_organizer
-except Exception:
+    # Explicitly call main() so that the GUI is started.
+    music_organizer.main()
+except Exception as e:
     traceback.print_exc()
     sys.exit(1)

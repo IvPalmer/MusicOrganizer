@@ -11,7 +11,6 @@ import threading
 import queue
 
 # Ensure that a character detection module is available.
-# Adding "chardet" to our imports forces its inclusion.
 try:
     import chardet
 except ImportError:
@@ -20,16 +19,16 @@ except ImportError:
 from discogs_utils import create_discogs_client
 import organizer
 
-# --- Resource Path Setup ---
+# --- Resource Path Setup (UPDATED) ---
 if getattr(sys, 'frozen', False):
-    # When frozen, __file__ is located in the Resources folder.
-    resource_path = os.path.dirname(__file__)
+    # Use the conventional py2app method:
+    # sys.executable is typically at .../Contents/MacOS/python
+    # The Resources folder is one level up from the MacOS folder.
+    resource_path = os.path.abspath(os.path.join(os.path.dirname(sys.executable), "..", "Resources"))
 else:
-    # When running in development (non-frozen), use the expected folder.
-    resource_path = os.path.join(os.getcwd(), "dist", "music_organizer.app", "Contents", "Resources")
-
+    # In development mode, use the directory where this file is located.
+    resource_path = os.path.abspath(os.path.dirname(__file__))
 print("Computed resource_path:", resource_path)
-# We use absolute paths; do not change the working directory.
 
 # --- Error Logging Setup ---
 def log_exception(exc):
@@ -45,11 +44,9 @@ def log_exception(exc):
 
 # --- Application Functions ---
 def open_soundcloud():
-    """Opens the SoundCloud page in the default web browser."""
     webbrowser.open("https://soundcloud.com/ivpalmer")
 
 def open_folder(folder_path):
-    """Opens the given folder using the OS default file explorer."""
     try:
         if os.name == "nt":
             os.startfile(folder_path)
@@ -62,29 +59,24 @@ def open_folder(folder_path):
 
 # --- Main GUI Application ---
 def main():
-    # Set the locale explicitly to avoid nil localized strings.
     try:
         locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
     except Exception as e:
         print("Error setting locale:", e)
 
-    # Initialize the main Tk window.
     root = tk.Tk()
     root.title("Music Organizer")
     root.geometry("700x700")
     root.resizable(False, False)
 
-    # Workaround: force Tcl/Tk to use a valid menu title.
     try:
         root.tk.eval('global tk::mac::MenuBarTitle; set tk::mac::MenuBarTitle "Music Organizer"')
     except Exception as e:
         print("Error setting tk::mac::MenuBarTitle:", e)
-
     try:
         root.tk.eval('proc tk::mac::initAppleMenu {} {}')
     except Exception as e:
         print("Error overriding tk::mac::initAppleMenu:", e)
-
     try:
         root.tk.call("set", "tk::mac::useAppleMenu", "0")
     except Exception as e:
@@ -93,7 +85,6 @@ def main():
         root.tk.call("set", "tk::mac::useMenuBar", "0")
     except Exception as e:
         print("Error setting tk::mac::useMenuBar:", e)
-
     try:
         simple_menu = tk.Menu(root)
         simple_menu.add_command(label="Music Organizer")

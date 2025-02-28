@@ -9,7 +9,8 @@ import shutil
 py2app.util.codesign_adhoc = lambda bundle: None
 
 APP = ['src/music_organizer.py']
-DATA_FILES = [('', ['__boot__.py'])]
+# Now include music_organizer.py along with the other modules.
+DATA_FILES = [('', ['__boot__.py', 'discogs_utils.py', 'src/organizer.py', 'src/music_organizer.py'])]
 OPTIONS = {
     'argv_emulation': True,
     'packages': ['discogs_client', 'mutagen', 'charset_normalizer', 'chardet'],
@@ -31,7 +32,6 @@ OPTIONS = {
         'CFBundleIdentifier': 'com.raphaelpalmer.musicorganizer',
         'LSMinimumSystemVersion': '11.0',
         'NSHighResolutionCapable': True,
-        # Set initial values (which may be overwritten by py2app)
         'PythonInfoDict': {
             'PythonExecutable': '@executable_path/../Frameworks/Python.framework/Versions/3.13/Python',
             'PythonLongVersion': '3.13.1 (v3.13.1:06714517797, Dec  3 2024, 14:00:22) [Clang 15.0.0 (clang-1500.3.9.4)]',
@@ -40,17 +40,14 @@ OPTIONS = {
     }
 }
 
-# Define a custom command to patch the Info.plist after building the app
+# Custom command to patch the Info.plist.
 class PatchPlist(Command):
     description = "Patch the Info.plist in the built app bundle to force the correct PythonInfoDict."
-    user_options = []  # No options for this command
-
+    user_options = []
     def initialize_options(self):
         pass
-
     def finalize_options(self):
         pass
-
     def run(self):
         app_bundle = os.path.join('dist', 'music_organizer.app')
         plist_path = os.path.join(app_bundle, 'Contents', 'Info.plist')
@@ -61,7 +58,6 @@ class PatchPlist(Command):
         except Exception as e:
             print("Error reading Info.plist:", e)
             return
-        # Force the correct Python runtime information.
         plist_data['PythonInfoDict'] = {
             'PythonExecutable': '@executable_path/../Frameworks/Python.framework/Versions/3.13/Python',
             'PythonShortVersion': '3.13',
@@ -74,17 +70,14 @@ class PatchPlist(Command):
         except Exception as e:
             print("Error writing Info.plist:", e)
 
-# Define a custom command to remove the problematic _multibytecodec.so file.
+# Custom command to remove the problematic _multibytecodec.so file.
 class RemoveMbcodec(Command):
     description = "Remove _multibytecodec.so from the bundle (workaround for sandbox denial)."
     user_options = []
-
     def initialize_options(self):
         pass
-
     def finalize_options(self):
         pass
-
     def run(self):
         mbcodec_path = os.path.join(
             'dist',
