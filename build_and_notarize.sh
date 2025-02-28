@@ -55,8 +55,8 @@ header "Verifying the app signature..."
 spctl -a -vv "dist/${APP_NAME}"
 
 # 10. (Optional) Launch the app in debug mode
-header "Launching the app in debug mode..."
-"dist/${APP_NAME}/Contents/MacOS/python" "dist/${APP_NAME}/Contents/Resources/__boot__.py"
+# header "Launching the app in debug mode..."
+# "dist/${APP_NAME}/Contents/MacOS/python" "dist/${APP_NAME}/Contents/Resources/__boot__.py"
 
 echo ""
 echo "Build, notarization, and launch process completed successfully!"

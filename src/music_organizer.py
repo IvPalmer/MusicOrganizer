@@ -30,10 +30,11 @@ else:
     resource_path = os.path.abspath(os.path.dirname(__file__))
 print("Computed resource_path:", resource_path)
 
-# --- Error Logging Setup ---
+# --- Error Logging Setup (UPDATED) ---
 def log_exception(exc):
-    """Log the exception traceback to a file in the Resources folder."""
-    log_file = os.path.join(resource_path, "error_log.txt")
+    """Log the exception traceback to a file in the user's home directory."""
+    home_dir = os.path.expanduser("~")
+    log_file = os.path.join(home_dir, "MusicOrganizer_error_log.txt")
     try:
         with open(log_file, "a") as f:
             f.write(f"{datetime.datetime.now()} - Exception occurred:\n")
